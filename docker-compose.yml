@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  order-db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: orderdb
+    ports:
+      - "54321:5432"
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      - order-db
+    environment:
+      PGHOST: order-db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: 12345
+      PGDATABASE: orderdb
+
+  inventory-db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: inventorydb
+    ports:
+      - "54322:5432"
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      - inventory-db
+    environment:
+      PGHOST: inventory-db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: 12345
+      PGDATABASE: inventorydb
+
+  customer-db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: customerdb
+    ports:
+      - "54323:5432"
+
+  customer-service:
+    build: ./customer-service
+    ports:
+      - "3003:3003"
+    depends_on:
+      - customer-db
+    environment:
+      PGHOST: customer-db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: 12345
+      PGDATABASE: customerdb
