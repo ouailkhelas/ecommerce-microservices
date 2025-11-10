@@ -1,65 +1,164 @@
-version: "3.9"
-
 services:
-  order-db:
-    image: postgres
-    environment:
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: orderdb
-    ports:
-      - "54321:5432"
-
   order-service:
     build: ./order-service
     ports:
       - "3001:3001"
+    environment:
+      - PGHOST=order-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=order_db
     depends_on:
       - order-db
-    environment:
-      PGHOST: order-db
-      PGPORT: 5432
-      PGUSER: postgres
-      PGPASSWORD: 12345
-      PGDATABASE: orderdb
 
-  inventory-db:
-    image: postgres
+  order-db:
+    image: postgres:15
     environment:
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: inventorydb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=order_db
     ports:
-      - "54322:5432"
+      - "54321:5432"
+    volumes:
+      - order_data:/var/lib/postgresql/data
+      - ./order-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # SUPPRIMER LA SECTION HEALTHCHECK
 
   inventory-service:
     build: ./inventory-service
     ports:
       - "3002:3002"
+    environment:
+      - PGHOST=inventory-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=inventory_db
     depends_on:
       - inventory-db
-    environment:
-      PGHOST: inventory-db
-      PGPORT: 5432
-      PGUSER: postgres
-      PGPASSWORD: 12345
-      PGDATABASE: inventorydb
 
-  customer-db:
-    image: postgres
+  inventory-db:
+    image: postgres:15
     environment:
-      POSTGRES_PASSWORD: 12345
-      POSTGRES_DB: customerdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=inventory_db
     ports:
-      - "54323:5432"
+      - "54322:5432"
+    volumes:
+      - inventory_data:/var/lib/postgresql/data
+      - ./inventory-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # SUPPRIMER LA SECTION HEALTHCHECK
 
   customer-service:
     build: ./customer-service
     ports:
       - "3003:3003"
+    environment:
+      - PGHOST=customer-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=customer_db
     depends_on:
       - customer-db
+
+  customer-db:
+    image: postgres:15
     environment:
-      PGHOST: customer-db
-      PGPORT: 5432
-      PGUSER: postgres
-      PGPASSWORD: 12345
-      PGDATABASE: customerdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=customer_db
+    ports:
+      - "54323:5432"
+    volumes:
+      - customer_data:/var/lib/postgresql/data
+      - ./customer-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # SUPPRIMER LA SECTION HEALTHCHECK
+
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PGHOST=payment-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=payment_db
+    depends_on:
+      - payment-db
+
+  payment-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=payment_db
+    ports:
+      - "54324:5432"
+    volumes:
+      - payment_data:/var/lib/postgresql/data
+      - ./payment-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # SUPPRIMER LA SECTION HEALTHCHECK
+
+  shipping-service:
+    build: ./shipping-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PGHOST=shipping-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=shipping_db
+    depends_on:
+      - shipping-db
+
+  shipping-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=shipping_db
+    ports:
+      - "54325:5432"
+    volumes:
+      - shipping_data:/var/lib/postgresql/data
+      - ./shipping-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # SUPPRIMER LA SECTION HEALTHCHECK
+
+  notification-service:
+    build: ./notification-service 
+    ports:
+      - "3006:3006"
+    environment:
+      - PGHOST=notification-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=notification_db
+    depends_on:
+      - notification-db
+
+  notification-db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=notification_db
+    ports:
+      - "54326:5432"
+    volumes:
+      - notification_data:/var/lib/postgresql/data
+      - ./notification-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # SUPPRIMER LA SECTION HEALTHCHECK
+
+volumes:
+  order_data:
+  inventory_data:
+  customer_data:
+  payment_data:
+  shipping_data:
+  notification_data:

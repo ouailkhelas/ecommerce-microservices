@@ -13,37 +13,37 @@ const pool = new Pool({
   database: process.env.PGDATABASE
 });
 
-// ⭐ EXPORTER D'ABORD
+// ⚠️ D'ABORD exporter le pool
 module.exports = { pool };
 
-// ⭐ IMPORTER ENSUITE
-const inventoryController = require('./src/inventoryController');
-app.use('/products', inventoryController);
+// ⚠️ ENSUITE importer le controller (après l'export)
+const paymentController = require('./src/paymentController');
+app.use('/payments', paymentController);
 
 // endpoint test
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Inventory Service is running',
-    availableRoutes: ['GET /products', 'GET /products/:id/stock', 'PUT /products/:id/stock']
+    message: 'Payment Service is running',
+    availableRoutes: ['GET /payments', 'POST /payments', 'GET /payments/:id']
   });
 });
 
-// ⭐ AJOUTER L'ATTENTE DE LA DB
+// attendre que la DB soit prête avant de démarrer
 async function waitDbReady() {
   while (true) {
     try {
       await pool.query("SELECT 1");
-      console.log("✅ Inventory DB ready!");
+      console.log("✅ Payment DB ready!");
       return;
     } catch (err) {
-      console.log("⏳ Inventory DB not ready yet...");
+      console.log("⏳ Payment DB not ready yet...");
       await new Promise(r => setTimeout(r, 2000));
     }
   }
 }
 
-// ⭐ ATTENDRE AVANT DE DÉMARRER
+// démarrage du service
 (async () => {
   await waitDbReady();
-  app.listen(3002, () => console.log('✅ Inventory Service running on port 3002'));
+  app.listen(3004, () => console.log('✅ Payment Service running on port 3004'));
 })();

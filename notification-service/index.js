@@ -17,14 +17,14 @@ const pool = new Pool({
 module.exports = { pool };
 
 // ⭐ IMPORTER ENSUITE
-const inventoryController = require('./src/inventoryController');
-app.use('/products', inventoryController);
+const notificationController = require('./src/notificationController');
+app.use('/notifications', notificationController);
 
 // endpoint test
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'Inventory Service is running',
-    availableRoutes: ['GET /products', 'GET /products/:id/stock', 'PUT /products/:id/stock']
+    message: 'Notification Service is running',
+    availableRoutes: ['GET /notifications', 'POST /notifications', 'GET /notifications/:id']
   });
 });
 
@@ -33,10 +33,10 @@ async function waitDbReady() {
   while (true) {
     try {
       await pool.query("SELECT 1");
-      console.log("✅ Inventory DB ready!");
+      console.log("✅ Notification DB ready!");
       return;
     } catch (err) {
-      console.log("⏳ Inventory DB not ready yet...");
+      console.log("⏳ Notification DB not ready yet...");
       await new Promise(r => setTimeout(r, 2000));
     }
   }
@@ -45,5 +45,5 @@ async function waitDbReady() {
 // ⭐ ATTENDRE AVANT DE DÉMARRER
 (async () => {
   await waitDbReady();
-  app.listen(3002, () => console.log('✅ Inventory Service running on port 3002'));
+  app.listen(3006, () => console.log('✅ Notification Service running on port 3006'));
 })();
