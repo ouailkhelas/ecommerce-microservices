@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS products (
+CREATE TABLE IF NOT EXISTS inventory (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 -- Données de test
-INSERT INTO products (name, description, price, quantity) VALUES 
+INSERT INTO inventory (name, description, price, quantity) VALUES 
 ('Laptop Dell XPS', 'Laptop haute performance 16GB RAM', 1299.99, 15),
 ('iPhone 15 Pro', 'Smartphone Apple 128GB', 999.99, 25),
 ('Samsung Galaxy S24', 'Smartphone Android 256GB', 849.99, 30),
@@ -18,4 +18,4 @@ INSERT INTO products (name, description, price, quantity) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Index pour les performances
-CREATE INDEX IF NOT EXISTS idx_products_name ON products(name);
+CREATE INDEX IF NOT EXISTS idx_inventory_name ON inventory(name);

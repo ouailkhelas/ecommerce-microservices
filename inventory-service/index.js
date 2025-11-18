@@ -18,13 +18,13 @@ module.exports = { pool };
 
 // ⭐ IMPORTER ENSUITE
 const inventoryController = require('./src/inventoryController');
-app.use('/products', inventoryController);
+app.use('/inventory', inventoryController);
 
 // endpoint test
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Inventory Service is running',
-    availableRoutes: ['GET /products', 'GET /products/:id/stock', 'PUT /products/:id/stock']
+    availableRoutes: ['GET /inventory', 'GET /inventory/:id/stock', 'PUT /inventory/:id/stock']
   });
 });
 

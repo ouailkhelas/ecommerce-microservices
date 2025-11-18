@@ -1,7 +1,7 @@
 -- Création de la table shipments
 CREATE TABLE IF NOT EXISTS shipments (
     id SERIAL PRIMARY KEY,
-    order_id INTEGER NOT NULL,
+    order_id BIGINT NOT NULL,
     customer_id INTEGER NOT NULL,
     tracking_number VARCHAR(100) UNIQUE NOT NULL,
     status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
