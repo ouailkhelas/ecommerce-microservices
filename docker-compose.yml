@@ -11,6 +11,9 @@ services:
       - PGDATABASE=order_db
     depends_on:
       - order-db
+      - customer-service
+      - inventory-service
+      - payment-service
 
   order-db:
     image: postgres:15
@@ -23,7 +26,6 @@ services:
     volumes:
       - order_data:/var/lib/postgresql/data
       - ./order-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # SUPPRIMER LA SECTION HEALTHCHECK
 
   inventory-service:
     build: ./inventory-service
@@ -49,7 +51,6 @@ services:
     volumes:
       - inventory_data:/var/lib/postgresql/data
       - ./inventory-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # SUPPRIMER LA SECTION HEALTHCHECK
 
   customer-service:
     build: ./customer-service
@@ -75,7 +76,6 @@ services:
     volumes:
       - customer_data:/var/lib/postgresql/data
       - ./customer-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # SUPPRIMER LA SECTION HEALTHCHECK
 
   payment-service:
     build: ./payment-service
@@ -89,6 +89,8 @@ services:
       - PGDATABASE=payment_db
     depends_on:
       - payment-db
+      - shipping-service
+      - notification-service
 
   payment-db:
     image: postgres:15
@@ -101,7 +103,6 @@ services:
     volumes:
       - payment_data:/var/lib/postgresql/data
       - ./payment-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # SUPPRIMER LA SECTION HEALTHCHECK
 
   shipping-service:
     build: ./shipping-service
@@ -115,6 +116,7 @@ services:
       - PGDATABASE=shipping_db
     depends_on:
       - shipping-db
+      - notification-service
 
   shipping-db:
     image: postgres:15
@@ -153,7 +155,6 @@ services:
     volumes:
       - notification_data:/var/lib/postgresql/data
       - ./notification-service/init-sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # SUPPRIMER LA SECTION HEALTHCHECK
 
 volumes:
   order_data:
