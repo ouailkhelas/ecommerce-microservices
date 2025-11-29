@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const { pool } = require('../index');
+const sendPaymentCreatedEvent = require('./events/sendPaymentCreatedEvent'); // 🔵 Asynchrone
 
 // ------------------------------------
 // GET /payments - Liste des paiements
@@ -43,7 +44,7 @@ router.post('/', async (req, res) => {
     console.log(`✅ Payment created: ${transaction_id}`);
 
     // -------------------------------
-    // 🔵 1. Déclencher Shipping Service
+    // 🔵 1. Déclencher Shipping Service (synchrone)
     // -------------------------------
     try {
       console.log("🚚 Triggering Shipping Service...");
@@ -62,7 +63,7 @@ router.post('/', async (req, res) => {
     }
 
     // -------------------------------
-    // 🔵 2. Notifier le client (Notification Service)
+    // 🔵 2. Notifier le client (Notification Service, synchrone)
     // -------------------------------
     try {
       console.log("📨 Sending payment confirmation notification...");
@@ -75,9 +76,17 @@ router.post('/', async (req, res) => {
       });
 
       console.log("📢 Payment notification sent!");
-
     } catch (notifyErr) {
       console.error("❌ Notification service error:", notifyErr.message);
+    }
+
+    // -------------------------------
+    // 🔵 3. Envoyer événement asynchrone payment_created
+    // -------------------------------
+    try {
+      await sendPaymentCreatedEvent(payment);
+    } catch (eventErr) {
+      console.error("❌ Failed to send payment_created event:", eventErr.message);
     }
 
     // Renvoyer le paiement
