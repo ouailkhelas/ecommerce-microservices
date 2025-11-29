@@ -1,0 +1,5 @@
+2025/11/27 00:28:14 [emerg] 1#1: host not found in upstream "auth-service:3006" in /etc/nginx/nginx.conf:52
+2025/11/27 00:36:20 [emerg] 1#1: "add_header" directive is not allowed here in /etc/nginx/nginx.conf:75
+2025/11/27 00:36:53 [emerg] 1#1: "add_header" directive is not allowed here in /etc/nginx/nginx.conf:75
+2025/11/27 22:38:56 [emerg] 1#1: "auth_request" directive is not allowed here in /etc/nginx/nginx.conf:193
+2025/11/27 22:39:09 [emerg] 1#1: "auth_request" directive is not allowed here in /etc/nginx/nginx.conf:193

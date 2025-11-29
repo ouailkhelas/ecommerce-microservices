@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-const { pool } = require('../index');  // Connexion DB (pool)
+const { pool } = require('../index'); // Connexion DB (pool)
+const sendShipmentCreatedEvent = require('./events/sendShipmentCreatedEvent'); // Nouveau module RabbitMQ
 
 // ------------------------------
 // GET /shipments - Liste expéditions
@@ -44,13 +45,13 @@ router.post('/', async (req, res) => {
 
     console.log(`✅ Shipment created successfully: ${tracking_number}`);
 
-    // ---------------------------------------
+    // -------------------------------
     // 🔵 Communication synchrone → Notification
-    // ---------------------------------------
+    // -------------------------------
     try {
       console.log("📨 Sending shipment notification...");
 
-      await axios.post("http://notification-service:3006/notify/shipment", {
+      await axios.post("http://notification-service:3006/notifications/shipment", {
         order_id,
         customer_id,
         tracking_number,
@@ -60,7 +61,16 @@ router.post('/', async (req, res) => {
       console.log("📢 Notification sent successfully.");
     } catch (notifyErr) {
       console.error("❌ Failed to send shipment notification:", notifyErr.message);
-      // le TP accepte qu’une notification échoue, on continue
+      // continuer même si notification échoue
+    }
+
+    // -------------------------------
+    // 🔵 Communication asynchrone → Event RabbitMQ
+    // -------------------------------
+    try {
+      await sendShipmentCreatedEvent(shipment);
+    } catch (eventErr) {
+      console.error("❌ Failed to send shipment_created event:", eventErr.message);
     }
 
     res.status(201).json(shipment);
@@ -113,9 +123,9 @@ router.put('/:id/status', async (req, res) => {
 
     console.log(`📦 Shipment ${req.params.id} updated to: ${status}`);
 
-    // 🔵 Notifier le changement de statut
+    // 🔵 Notifier le changement de statut (synchrone)
     try {
-      await axios.post("http://notification-service:3006/notify/shipment-status", {
+      await axios.post("http://notification-service:3006/notifications/shipment-status", {
         shipment_id: req.params.id,
         status
       });
