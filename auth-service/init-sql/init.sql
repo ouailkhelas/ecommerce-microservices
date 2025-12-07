@@ -37,7 +37,3 @@ INSERT INTO users (email, password_hash, role, first_name, last_name) VALUES
 ('staff@example.com', '$2b$10$rZ5L8xGKWQxJ4kQ8F3yK3eH4mXfYvYxLjN8hKjN8hKjN8hKjN8hKj', 'staff', 'Jane', 'Smith')
 ON CONFLICT (email) DO NOTHING;
 
--- Note: Pour générer un vrai hash bcrypt, utilisez:
--- const bcrypt = require('bcrypt');
--- const hash = await bcrypt.hash('password123', 10);
--- console.log(hash);

@@ -1,6 +1,5 @@
 const express = require('express');
 const { Pool } = require('pg');
-
 const app = express();
 app.use(express.json());
 
@@ -18,13 +17,25 @@ module.exports = { pool };
 
 // ⭐ IMPORTER ENSUITE
 const inventoryController = require('./src/inventoryController');
+
+// ✅ AJOUTER CETTE LIGNE : route /products
+app.use('/products', inventoryController);  // ← NOUVEAU !
+
+// Route originale (garder pour compatibilité)
 app.use('/inventory', inventoryController);
 
 // endpoint test
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Inventory Service is running',
-    availableRoutes: ['GET /inventory', 'GET /inventory/:id/stock', 'PUT /inventory/:id/stock']
+    availableRoutes: [
+      'GET /inventory', 
+      'GET /inventory/:id/stock', 
+      'PUT /inventory/:id/stock',
+      'GET /products',           // ← NOUVEAU !
+      'POST /products',          // ← NOUVEAU !
+      'GET /products/:id'        // ← NOUVEAU !
+    ]
   });
 });
 
