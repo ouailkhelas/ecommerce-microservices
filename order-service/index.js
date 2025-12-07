@@ -2,16 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
 
-// Importer le controller
-const orderController = require('./src/orderController');
+// PHASE 6: Observability
+const logger = require('./src/utils/logger');
+const correlationIdMiddleware = require('./src/middleware/correlationId');
+const metricsMiddleware = require('./src/middleware/metricsMiddleware');
+const { register, recordOrderCreated, recordOrderFailed } = require('./src/metrics');
 
-// Importer les fallback workers
-const { processPaymentQueue } = require('./src/fallback/paymentFallback');
-const { processNotificationQueue } = require('./src/fallback/notificationFallback');
+// PHASE 5: Resilience
 const paymentClient = require('./src/services/paymentClient');
 const notificationClient = require('./src/services/notificationClient');
+const customerClient = require('./src/services/customerClient');
+const inventoryClient = require('./src/services/inventoryClient');
+const { processPaymentQueue } = require('./src/fallback/paymentFallback');
+const { processNotificationQueue } = require('./src/fallback/notificationFallback');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,16 +26,23 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(morgan('combined'));
 
-// Middleware pour logger les headers du gateway
-app.use((req, res, next) => {
-  console.log('[Gateway Info]', {
-    requestId: req.headers['x-request-id'],
-    realIp: req.headers['x-real-ip'],
-    gateway: req.headers['x-gateway-name']
-  });
-  next();
+// PHASE 6: Ajouter correlation ID en premier
+app.use(correlationIdMiddleware);
+
+// PHASE 6: Ajouter metrics middleware
+app.use(metricsMiddleware);
+
+// =============================================
+// PHASE 6: ENDPOINT METRICS
+// =============================================
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (error) {
+    res.status(500).end(error);
+  }
 });
 
 // =============================================
@@ -39,6 +50,8 @@ app.use((req, res, next) => {
 // =============================================
 app.get('/health', (req, res) => {
   const circuitStats = paymentClient.getCircuitStats();
+  
+  req.logger.debug('Health check requested');
   
   res.status(200).json({
     status: 'UP',
@@ -52,21 +65,141 @@ app.get('/health', (req, res) => {
 // =============================================
 // ROUTES
 // =============================================
-app.use('/orders', orderController);
+
+// GET /orders - Liste des commandes
+app.get('/orders', async (req, res) => {
+  try {
+    req.logger.info('Fetching orders list');
+    
+    // Votre logique existante
+    res.status(200).json({
+      success: true,
+      data: []
+    });
+  } catch (error) {
+    req.logger.error('Failed to fetch orders', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// POST /orders - Créer une commande
+app.post('/orders', async (req, res) => {
+  const { customerId, items, totalAmount } = req.body;
+
+  try {
+    req.logger.info('Creating new order', { customerId, itemCount: items?.length, totalAmount });
+
+    // 1. Vérifier le client
+    req.logger.debug('Step 1: Validating customer', { customerId });
+    const customer = await customerClient.getCustomer(customerId);
+    req.logger.info('Customer validated', { customerId, customerEmail: customer.email });
+
+    // 2. Réserver le stock
+    req.logger.debug('Step 2: Reserving stock', { itemCount: items.length });
+    const stockReservation = await inventoryClient.reserveStock(items);
+    req.logger.info('Stock reserved successfully');
+
+    // 3. Créer la commande
+    const order = {
+      id: Date.now(),
+      customerId,
+      items,
+      totalAmount,
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    };
+
+    // 4. Traiter le paiement
+    req.logger.debug('Step 3: Processing payment', { orderId: order.id, amount: totalAmount });
+    const paymentResult = await paymentClient.processPayment({
+      orderId: order.id,
+      amount: totalAmount,
+      customerId
+    });
+
+    if (paymentResult.fallbackActivated) {
+      order.status = 'PENDING_PAYMENT';
+      order.paymentId = paymentResult.payment.id;
+      req.logger.warn('Payment fallback activated', { orderId: order.id, status: 'PENDING_PAYMENT' });
+    } else {
+      order.status = 'CONFIRMED';
+      order.paymentId = paymentResult.payment.id;
+      req.logger.info('Payment processed successfully', { orderId: order.id, paymentId: order.paymentId });
+    }
+
+    // 5. Envoyer notification
+    req.logger.debug('Step 4: Sending notification', { orderId: order.id });
+    const notificationResult = await notificationClient.sendOrderCreatedNotification(order, customer);
+    
+    if (notificationResult.fallbackActivated) {
+      req.logger.warn('Notification fallback activated', { orderId: order.id });
+    } else {
+      req.logger.info('Notification sent successfully', { orderId: order.id });
+    }
+
+    // PHASE 6: Enregistrer la métrique de commande créée
+    recordOrderCreated(totalAmount);
+
+    req.logger.info('Order created successfully', { 
+      orderId: order.id, 
+      status: order.status,
+      totalAmount
+    });
+
+    res.status(201).json({
+      success: true,
+      order,
+      payment: paymentResult.payment,
+      notification: notificationResult.notification,
+      resilience: {
+        paymentFallback: paymentResult.fallbackActivated || false,
+        notificationFallback: notificationResult.fallbackActivated || false
+      }
+    });
+
+  } catch (error) {
+    req.logger.error('Order creation failed', { 
+      error: error.message,
+      stack: error.stack,
+      customerId,
+      totalAmount
+    });
+
+    // PHASE 6: Enregistrer la métrique d'échec
+    recordOrderFailed(error.message);
+
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      step: 'Order creation failed'
+    });
+  }
+});
+
+// GET /orders/circuit-stats - Stats du Circuit Breaker
+app.get('/orders/circuit-stats', (req, res) => {
+  req.logger.debug('Circuit breaker stats requested');
+  res.status(200).json(paymentClient.getCircuitStats());
+});
 
 // Route 404
-app.use( (req, res) => {
+app.use((req, res) => {
+  req.logger.warn('Route not found', { path: req.path, method: req.method });
   res.status(404).json({
     success: false,
     error: 'Route not found'
   });
 });
 
-// =============================================
-// ERROR HANDLER
-// =============================================
+// Error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  req.logger.error('Unhandled error', { 
+    error: err.message,
+    stack: err.stack
+  });
   res.status(500).json({
     success: false,
     error: 'Internal server error'
@@ -75,11 +208,9 @@ app.use((err, req, res, next) => {
 
 // =============================================
 // BACKGROUND WORKERS
-// Worker pour retraiter les queues en attente
-// S'exécute toutes les 30 secondes
 // =============================================
 setInterval(async () => {
-  console.log('[Background Worker] Processing pending queues...');
+  logger.debug('Processing pending queues');
   await processPaymentQueue(paymentClient);
   await processNotificationQueue(notificationClient);
 }, 30000);
@@ -88,10 +219,15 @@ setInterval(async () => {
 // DÉMARRER LE SERVEUR
 // =============================================
 app.listen(PORT, () => {
-  console.log(`🛒 Order Service running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📊 Circuit stats: http://localhost:${PORT}/orders/circuit-stats`);
-  console.log(`🔄 Background workers started (30s interval)`);
+  logger.info('Order Service started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: `/health`,
+      metrics: `/metrics`,
+      orders: `/orders`
+    }
+  });
 });
 
 module.exports = app;

@@ -1,0 +1,77 @@
+# Prometheus Configuration
+global:
+  scrape_interval: 15s      # Scraper toutes les 15 secondes
+  evaluation_interval: 15s  # Évaluer les règles toutes les 15 secondes
+  external_labels:
+    cluster: 'ecommerce'
+    environment: 'development'
+
+# Scrape configurations
+scrape_configs:
+  # Order Service
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['order-service:3001']
+        labels:
+          service: 'order-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Auth Service
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:3007']
+        labels:
+          service: 'auth-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Customer Service
+  - job_name: 'customer-service'
+    static_configs:
+      - targets: ['customer-service:3003']
+        labels:
+          service: 'customer-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Inventory Service
+  - job_name: 'inventory-service'
+    static_configs:
+      - targets: ['inventory-service:3002']
+        labels:
+          service: 'inventory-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Payment Service
+  - job_name: 'payment-service'
+    static_configs:
+      - targets: ['payment-service:3004']
+        labels:
+          service: 'payment-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Notification Service
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:3006']
+        labels:
+          service: 'notification-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Shipping Service
+  - job_name: 'shipping-service'
+    static_configs:
+      - targets: ['shipping-service:3005']
+        labels:
+          service: 'shipping-service'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Prometheus lui-même
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
