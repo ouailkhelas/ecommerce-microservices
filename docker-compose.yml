@@ -4,7 +4,7 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
-      - "9090:9090"
+      - "9091:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -30,10 +30,10 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     depends_on:
       - prometheus
     restart: unless-stopped
-
 
   auth-service:
     build: ./auth-service
@@ -80,22 +80,22 @@ services:
       - payment-service
       - notification-service
       - shipping-service
-      - auth-service 
+      - auth-service
 
   rabbitmq:
-   image: rabbitmq:3-management
-   container_name: rabbitmq
-   expose:
-    - "5672"
-    - "15672"
-   environment:
-    RABBITMQ_DEFAULT_USER: user
-    RABBITMQ_DEFAULT_PASS: pass
-   healthcheck:
-    test: ["CMD", "rabbitmqctl", "status"]
-    interval: 10s
-    timeout: 5s
-    retries: 5
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    expose:
+      - "5672"
+      - "15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: pass
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   order-service:
     build: ./order-service
@@ -230,21 +230,20 @@ services:
     # SUPPRIMER LA SECTION HEALTHCHECK
 
   notification-service:
-   build: ./notification-service
-   expose:
-    - "3006"
-   environment:
-    - PGHOST=notification-db
-    - PGPORT=5432
-    - PGUSER=postgres
-    - PGPASSWORD=password
-    - PGDATABASE=notification_db
-   depends_on:
-    notification-db:
-      condition: service_healthy
-    rabbitmq:
-      condition: service_healthy
-
+    build: ./notification-service
+    expose:
+      - "3006"
+    environment:
+      - PGHOST=notification-db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=password
+      - PGDATABASE=notification_db
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   notification-db:
     image: postgres:15
@@ -253,7 +252,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=notification_db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 5s
       timeout: 5s
       retries: 5
