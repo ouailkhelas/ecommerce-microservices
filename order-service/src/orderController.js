@@ -23,7 +23,7 @@ const pool = new Pool({
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
-    
+
     res.status(200).json({
       success: true,
       data: result.rows,
@@ -45,7 +45,7 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM orders WHERE id = $1', [id]);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -111,7 +111,7 @@ router.post('/', async (req, res) => {
        RETURNING *`,
       [customerId, totalAmount, 'PENDING']
     );
-    
+
     const order = result.rows[0];
     console.log(`[Order Service] ✅ Order ${order.id} created in database`);
 
@@ -150,7 +150,7 @@ router.post('/', async (req, res) => {
     // ============================================
     console.log('[Order Service] Step 5: Sending notification...');
     const notificationResult = await notificationClient.sendOrderCreatedNotification(order, customer);
-    
+
     if (notificationResult.fallbackActivated) {
       console.log('[Order Service] ⚠️  Notification queued (fallback) - Order still successful');
     } else {
@@ -161,7 +161,7 @@ router.post('/', async (req, res) => {
     // SUCCÈS : Retourner la commande
     // ============================================
     console.log(`[Order Service] 🎉 Order ${order.id} created successfully`);
-    
+
     res.status(201).json({
       success: true,
       order: {
@@ -182,7 +182,7 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     console.error('[Order Service] ❌ Order creation failed:', error.message);
-    
+
     // ============================================
     // ROLLBACK : Libérer le stock en cas d'erreur
     // ============================================
@@ -199,6 +199,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message,
+      details: error.response ? error.response.data : 'No details available',
       step: 'Order creation failed'
     });
   }
@@ -244,7 +245,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {

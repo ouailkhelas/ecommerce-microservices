@@ -20,6 +20,16 @@ const { processNotificationQueue } = require('./src/fallback/notificationFallbac
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Pool PostgreSQL pour le health check au démarrage
+const { Pool } = require('pg');
+const pool = new Pool({
+  host: process.env.PGHOST || 'order-db',
+  port: process.env.PGPORT || 5432,
+  user: process.env.PGUSER || 'postgres',
+  password: process.env.PGPASSWORD || 'password',
+  database: process.env.PGDATABASE || 'order_db'
+});
+
 // =============================================
 // MIDDLEWARE
 // =============================================
@@ -50,9 +60,9 @@ app.get('/metrics', async (req, res) => {
 // =============================================
 app.get('/health', (req, res) => {
   const circuitStats = paymentClient.getCircuitStats();
-  
+
   req.logger.debug('Health check requested');
-  
+
   res.status(200).json({
     status: 'UP',
     service: 'order-service',
@@ -70,7 +80,7 @@ app.get('/health', (req, res) => {
 app.get('/orders', async (req, res) => {
   try {
     req.logger.info('Fetching orders list');
-    
+
     // Votre logique existante
     res.status(200).json({
       success: true,
@@ -133,7 +143,7 @@ app.post('/orders', async (req, res) => {
     // 5. Envoyer notification
     req.logger.debug('Step 4: Sending notification', { orderId: order.id });
     const notificationResult = await notificationClient.sendOrderCreatedNotification(order, customer);
-    
+
     if (notificationResult.fallbackActivated) {
       req.logger.warn('Notification fallback activated', { orderId: order.id });
     } else {
@@ -143,8 +153,8 @@ app.post('/orders', async (req, res) => {
     // PHASE 6: Enregistrer la métrique de commande créée
     recordOrderCreated(totalAmount);
 
-    req.logger.info('Order created successfully', { 
-      orderId: order.id, 
+    req.logger.info('Order created successfully', {
+      orderId: order.id,
       status: order.status,
       totalAmount
     });
@@ -161,7 +171,7 @@ app.post('/orders', async (req, res) => {
     });
 
   } catch (error) {
-    req.logger.error('Order creation failed', { 
+    req.logger.error('Order creation failed', {
       error: error.message,
       stack: error.stack,
       customerId,
@@ -174,6 +184,7 @@ app.post('/orders', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message,
+      details: error.response ? error.response.data : 'No details available',
       step: 'Order creation failed'
     });
   }
@@ -196,7 +207,7 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  req.logger.error('Unhandled error', { 
+  req.logger.error('Unhandled error', {
     error: err.message,
     stack: err.stack
   });
@@ -218,16 +229,35 @@ setInterval(async () => {
 // =============================================
 // DÉMARRER LE SERVEUR
 // =============================================
-app.listen(PORT, () => {
-  logger.info('Order Service started', {
-    port: PORT,
-    environment: process.env.NODE_ENV || 'development',
-    endpoints: {
-      health: `/health`,
-      metrics: `/metrics`,
-      orders: `/orders`
+// =============================================
+// DÉMARRAGE AVEC ATTENTE DE LA DB
+// =============================================
+async function waitDbReady() {
+  while (true) {
+    try {
+      await pool.query("SELECT 1");
+      logger.info("✅ Order DB ready!");
+      return;
+    } catch (err) {
+      logger.warn("⏳ Order DB not ready yet...", { error: err.message });
+      await new Promise(r => setTimeout(r, 2000));
     }
+  }
+}
+
+(async () => {
+  await waitDbReady();
+  app.listen(PORT, () => {
+    logger.info('Order Service started', {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      endpoints: {
+        health: `/health`,
+        metrics: `/metrics`,
+        orders: `/orders`
+      }
+    });
   });
-});
+})();
 
 module.exports = app;

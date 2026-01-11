@@ -13,6 +13,12 @@ const pool = new Pool({
   database: process.env.PGDATABASE || 'auth_db'
 });
 
+// Gestion des erreurs de pool pour éviter les crashs
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
+  // Ne pas quitter le processus, laisser le pool se reconnecter ou Docker redémarrer le service si nécessaire
+});
+
 // =============================================
 // POST /auth/register - Inscription
 // =============================================
