@@ -1,6 +1,6 @@
 # 🛒 E-Commerce Order Management System
 
-Complete implementation of a distributed microservices-based e-commerce platform demonstrating modern cloud-native architecture patterns, resilience engineering, and observability practices. Academic project completed as part of the **Containerization and Orchestration of Software Environments (COSE)** module.
+Complete implementation of a distributed microservices-based e-commerce platform demonstrating modern cloud-native architecture patterns, resilience engineering, and observability practices. Academic project completed as part of the **Containerization and Orchestration of Software Environments**.
 
 ## 🎯 Project Objective
 
@@ -82,7 +82,6 @@ Build a production-ready e-commerce order management system using microservices 
 ## 🚀 Implementation Phases
 
 ### Phase 1: Microservices Foundation
-**Duration**: 2 weeks  
 **Focus**: Independent microservices with Docker containerization
 
 **Deliverables**:
@@ -96,7 +95,6 @@ Build a production-ready e-commerce order management system using microservices 
 ---
 
 ### Phase 2: Service Communication & Infrastructure
-**Duration**: 2 weeks  
 **Focus**: Inter-service communication patterns
 
 **Deliverables**:
@@ -110,7 +108,6 @@ Build a production-ready e-commerce order management system using microservices 
 ---
 
 ### Phase 3: API Gateway
-**Duration**: 1 week  
 **Focus**: Single entry point with NGINX
 
 **Deliverables**:
@@ -124,7 +121,6 @@ Build a production-ready e-commerce order management system using microservices 
 ---
 
 ### Phase 4: Authentication & Authorization
-**Duration**: 2 weeks  
 **Focus**: Security implementation with JWT and RBAC
 
 **Deliverables**:
@@ -138,7 +134,6 @@ Build a production-ready e-commerce order management system using microservices 
 ---
 
 ### Phase 5: Resilience & Fault Tolerance
-**Duration**: 2 weeks  
 **Focus**: Failure handling and graceful degradation
 
 **Deliverables**:
@@ -155,16 +150,13 @@ Build a production-ready e-commerce order management system using microservices 
 ---
 
 ### Phase 6: Observability
-**Duration**: 2 weeks  
 **Focus**: Comprehensive monitoring, logging, and tracing
 
 **Deliverables**:
 - ✅ Structured JSON logging with correlation IDs
 - ✅ Prometheus metrics endpoints (/metrics)
-- ✅ ELK Stack for centralized logging
 - ✅ Grafana dashboards (System, Services, Resilience, Business)
 - ✅ Prometheus alert rules
-- ✅ Distributed tracing with Jaeger (optional)
 
 **Libraries**: Winston/Pino, prom-client, jaeger-client
 
@@ -180,16 +172,6 @@ Build a production-ready e-commerce order management system using microservices 
 - ✔️ Infrastructure as Code with Docker Compose
 - ✔️ Comprehensive documentation for each phase
 
-## 🎓 Skills Demonstrated
-
-- **Microservices Architecture**: Service decomposition, bounded contexts, API design
-- **Containerization**: Docker multi-stage builds, container orchestration
-- **Communication Patterns**: REST APIs, asynchronous messaging, event-driven design
-- **Security**: JWT authentication, RBAC, password encryption
-- **Resilience Engineering**: Circuit breakers, retries, timeouts, fallbacks
-- **Observability**: Structured logging, metrics collection, distributed tracing
-- **DevOps Practices**: IaC, monitoring, alerting, log aggregation
-- **Cloud-Native Design**: Scalable, portable, fault-tolerant systems
 
 ## 🔧 Quick Start
 
@@ -222,25 +204,7 @@ docker-compose down
 | Prometheus | http://localhost:9090 | - |
 | RabbitMQ Management | http://localhost:15672 | guest/guest |
 
-## 📊 Monitoring & Observability
 
-### Key Metrics Tracked
-- **Application**: Request rate, error rate, response time (p50, p95, p99)
-- **Business**: Orders created/failed, revenue, inventory levels
-- **Resilience**: Circuit breaker state, rejected requests, retry attempts
-- **Infrastructure**: CPU/memory usage, database connections, queue depth
-
-## 🧪 Testing
-
-The system includes comprehensive testing at multiple levels:
-
-- **Unit Tests**: Individual service logic validation
-- **Integration Tests**: Inter-service communication verification
-- **Resilience Tests**: Circuit breaker, retry, timeout behavior validation
-- **Load Tests**: System performance under stress (Apache Bench, k6)
-- **End-to-End Tests**: Complete order lifecycle validation
-
-Each service directory contains its own test suite and documentation.
 
 ## 📚 Documentation
 
@@ -264,25 +228,10 @@ Contributions are welcome! Please follow these steps:
 5. Open a Pull Request
 
 
-## 🙏 Acknowledgments
-
-- Microservices architecture patterns and best practices
-- Node.js and Express community
-- Docker and containerization ecosystem
-- Circuit breaker patterns and resilience engineering
-- ELK Stack and observability practices
-- Open-source community for excellent tools and libraries
-
 ## 🌟 Future Enhancements
 
 - [ ] Implement GraphQL API
 - [ ] Add Kubernetes deployment with Helm charts
-- [ ] Implement saga pattern for distributed transactions
-- [ ] Add Redis caching layer
-- [ ] Implement API versioning
-- [ ] Add comprehensive E2E test suite
-- [ ] Implement blue-green deployment
-- [ ] Add service mesh (Istio/Linkerd)
 - [ ] Implement automated backup and disaster recovery
 
 
